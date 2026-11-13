@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Vật Lí 9 - Giữa HKI</title>
+<style>
+:root{--p:#2563eb;--p2:#7c3aed;--bg:#f4f7fb;--card:#fff;--ok:#16a34a;--bad:#dc2626;--text:#172033}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#eff6ff,#f5f3ff);color:var(--text)}
+header{background:linear-gradient(120deg,var(--p),var(--p2));color:white;padding:28px 18px;text-align:center}
+header h1{margin:0 0 8px;font-size:clamp(24px,4vw,40px)} header p{margin:5px;opacity:.95}
+.wrap{max-width:1000px;margin:24px auto;padding:0 16px 50px}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}.stat{background:#fff;border-radius:14px;padding:14px 18px;box-shadow:0 4px 16px #0001;font-weight:bold}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:bold;cursor:pointer;background:var(--p);color:#fff}.btn.secondary{background:#64748b}
+.card{background:var(--card);border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 6px 20px #1e293b12;border:1px solid #e8edf5}
+.badge{display:inline-block;background:#e0e7ff;color:#3730a3;border-radius:99px;padding:5px 10px;font-size:12px;font-weight:bold;margin-bottom:8px}
+.q{font-size:17px;font-weight:700;line-height:1.45;margin:5px 0 14px}
+.options{display:grid;gap:9px}.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid #dbe3ee;border-radius:12px;padding:12px;cursor:pointer;transition:.2s}.opt:hover{border-color:var(--p);background:#f8fbff}.opt input{margin-top:3px}
+input[type=text],textarea{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px}.tf{display:grid;grid-template-columns:1fr;gap:8px}.statement{padding:10px;border-left:4px solid #818cf8;background:#f8faff;border-radius:8px}
+select{padding:8px;border-radius:8px;border:1px solid #cbd5e1;margin-left:8px}
+.result{display:none;position:sticky;bottom:12px;background:#0f172a;color:white;padding:16px;border-radius:16px;box-shadow:0 10px 30px #0003}.review.good{border-left:6px solid var(--ok)}.review.bad{border-left:6px solid var(--bad)}
+small{color:#64748b}.footer{text-align:center;color:#64748b;margin-top:20px}
+@media(max-width:600px){.card{padding:16px}.q{font-size:16px}}
+</style>
+</head>
+<body>
+<header>
+<h1>⚡ Quiz Vật Lí 9 – Kiểm tra giữa học kì I</h1>
+<p>Dựa trên ma trận: Năng lượng cơ học • Khúc xạ ánh sáng • Phản xạ toàn phần • Lăng kính • Thấu kính</p>
+<p><b>50 câu hỏi</b> gồm Trắc nghiệm, Đúng/Sai và Trả lời ngắn</p>
+</header>
+<div class="wrap">
+<div class="stats"><div class="stat">📚 Tổng: <span id="total"></span> câu</div><div class="stat">✍️ Đã trả lời: <span id="done">0</span></div><div class="stat">🎯 Điểm sau khi chấm: <span id="scoreLive">—</span></div></div>
+<div class="controls"><button class="btn" onclick="grade()">Chấm điểm</button><button class="btn secondary" onclick="resetQuiz()">Làm lại</button></div>
+<div id="quiz"></div>
+<div class="result" id="result"></div>
+<div class="footer">Chúc bạn học tốt! 🌟</div>
+</div>
+<script>
+const qs = [
+{t:'mc',topic:'Bài 1 – Dụng cụ đo',q:'Dụng cụ thích hợp nhất để đo lực là:',o:['Nhiệt kế','Lực kế','Ampe kế','Đồng hồ bấm giây'],a:1},
+{t:'mc',topic:'Bài 1 – Dụng cụ đo',q:'Đơn vị SI của lực là:',o:['Jun (J)','Oát (W)','Niutơn (N)','Kilôgam (kg)'],a:2},
+{t:'mc',topic:'Bài 2 – Động năng, thế năng',q:'Một vật đang chuyển động có thể có dạng năng lượng nào?',o:['Động năng','Thế năng đàn hồi luôn luôn','Chỉ nhiệt năng','Không có năng lượng'],a:0},
+{t:'mc',topic:'Bài 2 – Động năng, thế năng',q:'Động năng của vật phụ thuộc vào:',o:['Khối lượng và vận tốc','Chỉ khối lượng','Chỉ độ cao','Chỉ nhiệt độ'],a:0},
+{t:'mc',topic:'Bài 2 – Động năng, thế năng',q:'Vật có thế năng hấp dẫn khi:',o:['Đang nóng lên','Ở một độ cao so với mốc chọn','Đứng yên trên mặt đất luôn luôn','Không có khối lượng'],a:1},
+{t:'mc',topic:'Bài 3 – Cơ năng',q:'Cơ năng của vật là tổng của:',o:['Động năng và thế năng','Nhiệt năng và điện năng','Quang năng và hóa năng','Chỉ động năng'],a:0},
+{t:'mc',topic:'Bài 4 – Công, công suất',q:'Công cơ học được tính bằng công thức nào khi lực cùng hướng chuyển dời?',o:['A = F.s','A = F/s','A = F.s.t','A = s/t'],a:0},
+{t:'mc',topic:'Bài 4 – Công suất',q:'Đơn vị của công suất là:',o:['J','N','W','m/s'],a:2},
+{t:'mc',topic:'Bài 5 – Khúc xạ ánh sáng',q:'Hiện tượng tia sáng đổi hướng khi truyền xiên qua mặt phân cách hai môi trường trong suốt gọi là:',o:['Phản xạ','Khúc xạ','Tán sắc','Giao thoa'],a:1},
+{t:'mc',topic:'Bài 5 – Khúc xạ ánh sáng',q:'Khi tia sáng truyền từ không khí vào nước theo phương xiên, tia khúc xạ thường:',o:['Lệch xa pháp tuyến','Lệch gần pháp tuyến','Trùng với mặt phân cách','Biến mất'],a:1},
+{t:'mc',topic:'Bài 6 – Phản xạ toàn phần',q:'Phản xạ toàn phần có thể xảy ra khi ánh sáng truyền:',o:['Từ môi trường chiết quang hơn sang kém hơn với góc tới đủ lớn','Từ mọi môi trường với mọi góc tới','Chỉ từ không khí vào nước','Chỉ khi tia tới vuông góc'],a:0},
+{t:'mc',topic:'Bài 7 – Lăng kính',q:'Lăng kính có tác dụng chủ yếu đối với chùm sáng trắng là:',o:['Phân tích thành nhiều màu','Làm mất ánh sáng','Chỉ tạo nhiệt','Không làm đổi hướng tia sáng'],a:0},
+{t:'mc',topic:'Bài 8 – Thấu kính',q:'Thấu kính hội tụ có phần giữa:',o:['Mỏng hơn phần rìa','Dày hơn phần rìa','Bằng mọi nơi','Không trong suốt'],a:1},
+{t:'mc',topic:'Bài 8 – Thấu kính',q:'Chùm tia song song với trục chính đi qua thấu kính hội tụ sẽ:',o:['Trở thành chùm phân kì','Hội tụ tại tiêu điểm','Không đổi hướng','Bị phản xạ hoàn toàn'],a:1},
+{t:'mc',topic:'Bài 8 – Thấu kính',q:'Thấu kính phân kì có phần giữa:',o:['Dày hơn phần rìa','Mỏng hơn phần rìa','Bằng nhau','Luôn đục'],a:1},
+
+{t:'tf',topic:'Đúng – Sai: Cơ học',q:'Đánh dấu Đúng hoặc Sai cho từng nhận định.',s:[
+['Động năng tăng khi vận tốc của vật tăng (cùng khối lượng).',true],
+['Một vật đứng yên chắc chắn không có thế năng.',false],
+['Cơ năng có thể gồm động năng và thế năng.',true],
+['Đơn vị của công cơ học là oát (W).',false]]},
+{t:'tf',topic:'Đúng – Sai: Công và công suất',q:'Đánh dấu Đúng hoặc Sai.',s:[
+['Công suất cho biết tốc độ thực hiện công.',true],
+['Cùng một công, thời gian thực hiện càng ngắn thì công suất càng lớn.',true],
+['Công suất có đơn vị là J.',false],
+['Nếu lực vuông góc với hướng chuyển dời thì theo mô hình đơn giản A = F.s không áp dụng trực tiếp.',true]]},
+{t:'tf',topic:'Đúng – Sai: Khúc xạ',q:'Đánh dấu Đúng hoặc Sai.',s:[
+['Khúc xạ là sự đổi hướng của tia sáng khi truyền qua mặt phân cách hai môi trường.',true],
+['Tia tới vuông góc mặt phân cách luôn bị lệch hướng mạnh.',false],
+['Chiếc đũa cắm trong nước trông như bị gãy là một ví dụ liên quan đến khúc xạ.',true],
+['Khúc xạ chỉ xảy ra với ánh sáng trắng.',false]]},
+{t:'tf',topic:'Đúng – Sai: Phản xạ toàn phần',q:'Đánh dấu Đúng hoặc Sai.',s:[
+['Phản xạ toàn phần có liên quan đến góc giới hạn.',true],
+['Cáp quang ứng dụng hiện tượng phản xạ toàn phần.',true],
+['Phản xạ toàn phần xảy ra khi ánh sáng truyền từ môi trường kém chiết quang sang môi trường chiết quang hơn.',false],
+['Khi có phản xạ toàn phần, không có tia khúc xạ truyền sang môi trường kia theo mô hình lý tưởng.',true]]},
+{t:'tf',topic:'Đúng – Sai: Lăng kính và thấu kính',q:'Đánh dấu Đúng hoặc Sai.',s:[
+['Lăng kính có thể làm đổi hướng tia sáng.',true],
+['Ánh sáng trắng qua lăng kính có thể tạo ra dải màu.',true],
+['Thấu kính hội tụ luôn cho ảnh ảo.',false],
+['Thấu kính phân kì thường cho ảnh ảo, cùng chiều và nhỏ hơn vật đối với vật thật.',true]]},
+
+{t:'short',topic:'Trả lời ngắn',q:'Viết đơn vị SI của công cơ học.',a:['j','jun','joule']},
+{t:'short',topic:'Trả lời ngắn',q:'Viết đơn vị SI của công suất.',a:['w','oat','watt']},
+{t:'short',topic:'Trả lời ngắn',q:'Công thức tính công cơ học khi lực cùng hướng chuyển dời? (viết dạng A=F.s hoặc A=F×s)',a:['a=f.s','a=f×s','a=f*s','a=fs']},
+{t:'short',topic:'Trả lời ngắn',q:'Công thức tính công suất?',a:['p=a/t','p=a:t','p=a÷t']},
+{t:'short',topic:'Trả lời ngắn',q:'Tên hiện tượng ánh sáng đổi hướng khi truyền qua mặt phân cách hai môi trường?',a:['khuc xa','khúc xạ']},
+{t:'short',topic:'Trả lời ngắn',q:'Tên hiện tượng được ứng dụng trong cáp quang?',a:['phan xa toan phan','phản xạ toàn phần']},
+{t:'short',topic:'Trả lời ngắn',q:'Lăng kính có thể phân tích ánh sáng trắng thành bao nhiêu màu cơ bản trong dải quang phổ nhìn thấy theo cách học phổ thông?',a:['7','bảy','bay']},
+{t:'short',topic:'Trả lời ngắn',q:'Tên loại thấu kính có phần giữa dày hơn phần rìa?',a:['thau kinh hoi tu','thấu kính hội tụ','hoi tu','hội tụ']},
+{t:'short',topic:'Trả lời ngắn',q:'Tên loại thấu kính có phần giữa mỏng hơn phần rìa?',a:['thau kinh phan ki','thấu kính phân kì','phan ki','phân kì']},
+{t:'short',topic:'Trả lời ngắn',q:'Đại lượng biểu thị năng lượng vật có được do chuyển động?',a:['dong nang','động năng']},
+
+{t:'mc',topic:'Vận dụng – Cơ học',q:'Một vật có khối lượng không đổi, vận tốc tăng gấp đôi. Động năng sẽ:',o:['Tăng 2 lần','Tăng 4 lần','Không đổi','Giảm 2 lần'],a:1},
+{t:'mc',topic:'Vận dụng – Cơ học',q:'Một quả bóng được ném thẳng lên cao. Trong quá trình đi lên (bỏ qua cản không khí), động năng:',o:['Tăng, thế năng giảm','Giảm, thế năng tăng','Cả hai tăng','Cả hai không đổi'],a:1},
+{t:'mc',topic:'Vận dụng – Công',q:'Lực 20 N kéo vật đi được 5 m cùng hướng lực. Công của lực là:',o:['4 J','25 J','100 J','0 J'],a:2},
+{t:'mc',topic:'Vận dụng – Công suất',q:'Một máy thực hiện công 600 J trong 20 s. Công suất là:',o:['12 W','30 W','300 W','12000 W'],a:1},
+{t:'mc',topic:'Vận dụng – Khúc xạ',q:'Một người nhìn xuống đáy bể nước thường thấy đáy bể:',o:['Sâu hơn thực tế','Nông hơn thực tế','Không thay đổi vị trí biểu kiến','Biến mất hoàn toàn'],a:1},
+{t:'mc',topic:'Vận dụng – Thấu kính',q:'Kính lúp thường sử dụng:',o:['Thấu kính phân kì','Thấu kính hội tụ','Gương phẳng','Lăng kính'],a:1},
+{t:'mc',topic:'Vận dụng – Thấu kính',q:'Kính cận thường dùng thấu kính:',o:['Hội tụ','Phân kì','Phẳng song song','Lăng kính'],a:1},
+{t:'mc',topic:'Vận dụng – Quang học',q:'Khi tia sáng đi từ nước ra không khí và góc tới tăng dần, có thể đến một lúc:',o:['Xảy ra phản xạ toàn phần','Không còn phản xạ','Tia sáng dừng lại','Nước phát sáng'],a:0},
+{t:'mc',topic:'Vận dụng – Lăng kính',q:'Màu nào thường bị lệch nhiều hơn khi ánh sáng trắng qua lăng kính?',o:['Đỏ','Tím','Cả hai bằng nhau','Không màu nào lệch'],a:1},
+{t:'mc',topic:'Vận dụng – Cơ năng',q:'Bỏ qua ma sát, khi vật rơi tự do thì:',o:['Cơ năng luôn giảm','Cơ năng được bảo toàn','Động năng không đổi','Thế năng không đổi'],a:1},
+
+{t:'short',topic:'Tính nhanh',q:'Một lực 50 N kéo vật đi 4 m cùng hướng. Công bằng bao nhiêu J? (chỉ nhập số)',a:['200','200 j','200j']},
+{t:'short',topic:'Tính nhanh',q:'Một máy làm công 900 J trong 30 s. Công suất bằng bao nhiêu W? (chỉ nhập số)',a:['30','30 w','30w']},
+{t:'short',topic:'Tính nhanh',q:'Một lực 10 N thực hiện công 80 J cùng hướng chuyển dời. Quãng đường bằng bao nhiêu m? (chỉ nhập số)',a:['8','8 m','8m']},
+{t:'short',topic:'Tính nhanh',q:'Một máy có công suất 100 W hoạt động 5 s. Công thực hiện bằng bao nhiêu J? (chỉ nhập số)',a:['500','500 j','500j']},
+{t:'short',topic:'Tổng hợp',q:'Cơ năng = ... + ...? (viết hai dạng năng lượng)',a:['dong nang va the nang','động năng và thế năng','động năng+thế năng','dong nang+the nang']},
+
+{t:'tf',topic:'Đúng – Sai: Vận dụng tổng hợp',q:'Đánh dấu Đúng hoặc Sai.',s:[
+['Nếu cùng một lực kéo cùng hướng, quãng đường tăng thì công tăng.',true],
+['Một máy công suất lớn hơn luôn thực hiện tổng công lớn hơn trong mọi trường hợp.',false],
+['Tia sáng qua thấu kính có thể đổi hướng do khúc xạ.',true],
+['Lăng kính và thấu kính đều có thể làm tia sáng đổi hướng.',true]]},
+{t:'mc',topic:'Tổng hợp',q:'Hiện tượng nào giải thích việc tia sáng trong cáp quang được giữ truyền dọc theo lõi?',o:['Khúc xạ đơn thuần','Phản xạ toàn phần','Tán sắc ánh sáng trắng','Nhiễu xạ'],a:1},
+{t:'mc',topic:'Tổng hợp',q:'Để tăng công suất khi công thực hiện không đổi, cần:',o:['Tăng thời gian','Giảm thời gian','Giảm lực luôn luôn','Tăng khối lượng'],a:1},
+{t:'mc',topic:'Tổng hợp',q:'Khi vật chuyển động nhanh hơn, dạng năng lượng trực tiếp liên quan tăng là:',o:['Thế năng hấp dẫn','Động năng','Hóa năng','Năng lượng hạt nhân'],a:1},
+{t:'short',topic:'Tổng hợp',q:'Tên đại lượng có công thức P = A/t?',a:['cong suat','công suất']},
+{t:'short',topic:'Tổng hợp',q:'Tên hiện tượng làm chiếc thìa trong cốc nước trông bị gãy?',a:['khuc xa','khúc xạ']},
+{t:'mc',topic:'Câu cuối',q:'Chọn phương án mô tả đúng nhất về bài học này:',o:['Cơ học và quang học đều có các hiện tượng có thể quan sát và tính toán','Chỉ có công thức, không có ứng dụng','Chỉ học thuộc lòng là đủ','Các hiện tượng không liên quan thực tế'],a:0}
+];
+
+function norm(x){return x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim()}
+function render(){
+document.getElementById('total').textContent=qs.length;
+const root=document.getElementById('quiz');root.innerHTML='';
+qs.forEach((x,i)=>{
+ let h=`<div class="card" id="card${i}"><div class="badge">Câu ${i+1} • ${x.topic}</div><div class="q">${x.q}</div>`;
+ if(x.t==='mc'){h+=`<div class="options">`+x.o.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}" onchange="updateDone()"> <span>${String.fromCharCode(65+j)}. ${o}</span></label>`).join('')+`</div>`}
+ if(x.t==='short'){h+=`<input type="text" id="q${i}" placeholder="Nhập câu trả lời..." oninput="updateDone()">`}
+ if(x.t==='tf'){h+=`<div class="tf">`+x.s.map((z,j)=>`<div class="statement">${j+1}. ${z[0]} <select id="q${i}_${j}" onchange="updateDone()"><option value="">-- Chọn --</option><option value="true">Đúng</option><option value="false">Sai</option></select></div>`).join('')+`</div>`}
+ h+=`</div>`;root.innerHTML+=h;
+});
+}
+function updateDone(){
+let n=0;qs.forEach((x,i)=>{if(x.t==='mc'&&document.querySelector(`input[name=q${i}]:checked`))n++;if(x.t==='short'&&document.getElementById(`q${i}`).value.trim())n++;if(x.t==='tf'&&x.s.every((_,j)=>document.getElementById(`q${i}_${j}`).value!==''))n++;});
+document.getElementById('done').textContent=n;
+}
+function grade(){
+let score=0, details=[];
+qs.forEach((x,i)=>{
+let ok=false,ans='';
+if(x.t==='mc'){let el=document.querySelector(`input[name=q${i}]:checked`);ok=!!el&&Number(el.value)===x.a;ans='Đáp án: '+String.fromCharCode(65+x.a)+'. '+x.o[x.a]}
+if(x.t==='short'){let v=norm(document.getElementById(`q${i}`).value);ok=x.a.map(norm).includes(v);ans='Đáp án gợi ý: '+x.a[0]}
+if(x.t==='tf'){let c=0;x.s.forEach((z,j)=>{if(document.getElementById(`q${i}_${j}`).value===String(z[1]))c++});ok=c===x.s.length;ans='Đáp án: '+x.s.map((z,j)=>`${j+1}.${z[1]?'Đúng':'Sai'}`).join(' • ')}
+if(ok)score++;
+let card=document.getElementById('card'+i);card.classList.remove('review','good','bad');card.classList.add('review',ok?'good':'bad');
+details.push(ok);
+});
+const pct=(score/qs.length*100).toFixed(1);
+document.getElementById('scoreLive').textContent=`${score}/${qs.length} (${pct}%)`;
+let msg=pct>=80?'Xuất sắc! 🌟':pct>=60?'Khá tốt! 👍':'Hãy xem lại kiến thức và thử lại nhé! 💪';
+let r=document.getElementById('result');r.style.display='block';r.innerHTML=`<b>Kết quả: ${score}/${qs.length} câu đúng (${pct}%)</b><br>${msg}`;
+window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+}
+function resetQuiz(){render();document.getElementById('done').textContent='0';document.getElementById('scoreLive').textContent='—';document.getElementById('result').style.display='none';window.scrollTo({top:0,behavior:'smooth'})}
+render();
+</script>
+</body></html>
